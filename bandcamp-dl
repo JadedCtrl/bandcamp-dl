@@ -1,0 +1,124 @@
+#!/bin/sh
+########################################
+# name: bandcamp-dl
+# lisc: cc0
+# desc: download the mp3(s) of a
+#       bandcamp track or album
+# main: Jenga Phoenix
+#       <jadedctrl@teknik.io>
+####################
+
+TEMP="$(mktemp)"
+DOWNLOADER="curl"
+# supported programmes: `curl`, `ftp`, or `wget`
+
+
+# STRING --> STRING
+# Return the URL to the mp3 of a given track (from its URL)
+function track_mp3
+{
+	track_url="$1"
+
+	gendl -o "$TEMP" "$track_url"
+
+	grep "trackinfo" "$TEMP" \
+	| sed 's%.*"mp3-128":"%%' \
+	| sed 's%".*%%'
+}
+
+# STRING --> STRING
+# Get the root of a URL.
+function root_url
+{
+	url="$1"
+
+	protocol="$(echo "$url" | sed 's%://.*%%')"
+	url="$(echo "$url" | sed 's%.*://%%')"
+	root_url="$(echo "$url" | sed 's%/.*%%')"
+
+	echo "${protocol}://${root_url}"
+}
+
+# STRING --> STRING
+# Get the filename of a URL.
+function local_url
+{
+	url="$1"
+
+	local_url="$(echo "$url" | sed 's%.*/%%')"
+
+	echo "$local_url"
+}
+
+# STRING  --> STRING
+# Return the URLs  of l
+function track_urls
+{
+	album_url="$1"
+	root_url="$(root_url "$album_url")"
+
+	gendl -o "$TEMP" "$album_url" > /dev/null
+
+	track_stack="$(grep "\"/track" "$TEMP" | grep "<a href" | grep "</span>")"
+	track_stack="$(echo "$track_stack" | sed 's%.*<a href=\"%%g' | sed 's%".*%%g')"
+
+	track_stack="$(echo "$track_stack" | sed 's%^%'"$root_url"'%g')"
+	
+	echo "$track_stack"
+}
+
+# STRING --> NIL
+# Download the MP3s of every track of a given album.
+function download_album_mp3
+{
+	album_url="$1"
+
+	track_stack="$(track_urls "$album_url")"
+	track_lines="$(echo "$track_stack" | wc -l)"
+
+
+	while test "$(echo "$track_lines")" -gt 1
+	do
+		download_track_mp3 "$(echo "$track_stack" | head -1)"
+
+		track_stack="$(echo "$track_stack" | tail -$((track_lines - 1)))"
+		track_lines="$(echo "$track_stack" | wc -l)"
+	done
+
+}
+
+# STRING --> NIL
+# Download a track's MP3 file.
+function download_track_mp3
+{
+	track_url="$1"
+
+	gendl -o "$(local_url "$track_url").mp3" \
+		"$(track_mp3 "$track_url")"
+}
+
+
+# --------------------------------------
+# invocation
+
+# NIL --> NIL
+# Print the usage message and abort.
+function usage
+{
+	echo "Usage: bandcamp-dl -a album_url"
+	echo "       bandcamp-dl -t track_url"
+	exit 2
+}
+
+# --------------------------------------
+
+ARG="$1"
+URL="$2"
+
+if test "$ARG" = "-a"; then
+	download_album_mp3 "$URL"
+elif test "$ARG" = "-t"; then
+	download_track_mp3 "$URL"
+else
+	usage
+fi
