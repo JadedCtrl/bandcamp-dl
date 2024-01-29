@@ -5,6 +5,11 @@ BANDCAMP-DL                                                      Jam, not jelly
 A simple script that can download a Bandcamp album or track.
 (Streaming is for nerds anyway >o>)
 
+Note: This is a fairly old script, it’s almost certain not to work anymore.
+I highly recommend using, instead, either yt-dlp or bandcamp-downloader:
+
+	https://github.com/yt-dlp/yt-dlp
+	https://github.com/iheanyi/bandcamp-dl
 
 
 ----------------------------------------
@@ -36,5 +41,5 @@ Pretty self-explanatory =w=
 BORING STUFF
 ----------------------------------------
 License is CC-0 (though, "gendl" is GPLv3)
-Author is Jenga Phoenix <jadedctrl@teknik.io>
-Sauce is at https://git.eunichx.us/bandcamp-dl
+Author is Jenga Phoenix <jadedctrl@posteo.at>
+Sauce is at https://hak.xwx.moe/jadedctrl/bandcamp-dl
